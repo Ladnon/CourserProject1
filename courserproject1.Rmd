@@ -1,0 +1,46 @@
+---
+title: "Course Project 1"
+author: "Martin Mason"
+date: "9 August 2016"
+output: html_document
+---
+
+###Loading the Document into R
+
+First we download the data the 
+```{r eval=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "activityData.zip", method="curl")
+```
+
+Then we unzip the data
+```{r}
+unzip("activityData.zip")
+```
+
+Then we store data in a variable called activity
+```{r}
+myCSV <- read.csv("activity.csv", header = TRUE)
+```
+
+###What is the mean total number of steps taken per day
+First we create an array called stepsPerDay with the number of steps for each day
+```{r}
+stepsPerDay <- tapply(myCSV$steps, myCSV$date, sum, na.rm=TRUE)
+```
+
+Which give us the following array
+```{r echo=FALSE}
+stepsPerDay
+```
+
+This can in turn be represented as a histogram
+```{r}
+hist(stepsPerDay)
+```
+
+The mean and median can be calculate in the followin way
+```{r results="hide"}
+myMedian <- median(stepsPerDay)
+myMean <- mean(stepsPerDay)
+```
+This gives us a mean of `r myMean` and a median of `r myMedian`.
