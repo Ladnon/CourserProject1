@@ -5,7 +5,7 @@ date: "9 August 2016"
 output: html_document
 ---
 
-###Loading the Document into R
+####Loading the Document into R
 
 First we download the data the 
 ```{r eval=FALSE}
@@ -22,7 +22,7 @@ Then we store data in a variable called activity
 myCSV <- read.csv("activity.csv", header = TRUE)
 ```
 
-###What is the mean total number of steps taken per day
+##What is the mean total number of steps taken per day?
 First we create an array called stepsPerDay with the number of steps for each day
 ```{r}
 stepsPerDay <- tapply(myCSV$steps, myCSV$date, sum, na.rm=TRUE)
@@ -44,3 +44,43 @@ myMedian <- median(stepsPerDay)
 myMean <- mean(stepsPerDay)
 ```
 This gives us a mean of `r myMean` and a median of `r myMedian`.
+
+##What is the average daily activity pattern?
+
+Here is the time-series plot:
+
+```{r echo = FALSE}
+plot(unique(myCSV$interval), tapply(myCSV$steps, myCSV$interval, mean, na.rm=TRUE), type="l")
+```
+
+I admit I was pretty unsure of this section but
+the calculation max of the code
+
+```{r}
+myData <- tapply(myCSV$steps, myCSV$interval, mean, na.rm=TRUE)
+```
+
+To find the 5 minute interval which was highest I did the following:
+
+```{r}
+highestInterval <-  names(myData[myData == max(myData)])
+```
+
+Returns the value `r max(myData)`, showing that it was in fact interval number `r highestInterval`.
+
+##Inputing missing values
+
+First we count the number of rows with NAs:
+
+```{r}
+NAs <- (!complete.cases(myCSV))
+NAs <- NAs[NAs == TRUE]
+NACount <- length(NAs)
+return(NACount)
+```
+
+This means that the number of rows that are incomplete, e.g. contain NAs, is `r NACount`.
+
+
+
+
