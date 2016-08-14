@@ -38,7 +38,7 @@ This can in turn be represented as a histogram
 hist(stepsPerDay)
 ```
 
-The mean and median can be calculate in the followin way
+The mean and median can be calculate in the following way
 ```{r results="hide"}
 myMedian <- median(stepsPerDay)
 myMean <- mean(stepsPerDay)
@@ -50,7 +50,7 @@ This gives us a mean of `r myMean` and a median of `r myMedian`.
 Here is the time-series plot:
 
 ```{r echo = FALSE}
-plot(unique(myCSV$interval), tapply(myCSV$steps, myCSV$interval, mean, na.rm=TRUE), type="l")
+plot(unique(myCSV$interval), tapply(myCSV$steps, myCSV$interval, mean, na.rm=TRUE), type="l",main = "Activity", xlab = "5 minute intervals",ylab ="Average steps")
 ```
 
 I admit I was pretty unsure of this section but
@@ -81,6 +81,148 @@ return(NACount)
 
 This means that the number of rows that are incomplete, e.g. contain NAs, is `r NACount`.
 
+####Replacing NAs
+
+First I want to check if there are NAs in other columns than simply the first one. 
+
+Here I check the 'steps' column for NAs:
+```{r}
+any(is.na(myCSV$steps))
+```
+
+The TRUE indicates that there are some NAs in this column
+
+Now I check the 'date' column:
+```{r}
+any(is.na(myCSV$date))
+```
+
+The FALSE indicates that there are no NAs
+
+Then I check the 'interval' column for NAs
+
+```{r}
+any(is.na(myCSV$interval))
+```
+
+The FALSE value indicates that there are no NAs in this column
+
+This means that all the the NAs that need replacing are in the steps column
+
+####Locating the NAs
+
+First I'll create an index to give me a way to identify the places where I need to replace a NA with a value
+
+```{r}
+index <- is.na(myCSV$steps)
+```
+
+Second, I'll create a copy of the data called tidyValues:
+```{r}
+tidyValues <- myCSV
+```
+
+Thirdly, I need to calculate the means for each intervak, this will be what I replace the NAs with
+
+```{r}
+intervalMeans <- tapply(tidyValues$steps, tidyValues$interval, mean, na.rm=TRUE)
+```
+
+Now we need to create the code that replaces the NA value with the mean of the interval, using the index.
+```{r}
+for(i in 1:length(index)){
+        if(index[i] == TRUE){
+                tidyValues$steps[i] <- intervalMeans[paste(tidyValues$interval[i])]
+        }
+}
+```
+
+We can then double check that there no longer are any NAs by repeating the first test:
+```{r}
+any(is.na(tidyValues$steps))
+```
+
+The FALSE indicates that there are no longer any NAs in the column.
+
+####Making a histogram
+First we need to calculate the the number of steps for each day, then we display this information as a histogram.
+```{r}
+stepSums <- tapply(tidyValues$steps, tidyValues$date, sum)
+hist(stepSums)
+
+```
+
+The new histogram seems to indicate more of a normal distribution in the data.
+
+Next we calculate the median and mean values:
+```{r}
+stepsPerDay
+stepSums
+newMean <- mean(stepSums)
+newMedian <- median(stepSums)
+newMean
+newMedian
+```
+
+The data containing NAs gave us a mean of `r myMean` and a median of `r myMedian`.
+The data with NAs replaced gave us the same mean and median value;  10766.19. This seems odd to me because the distribution does not look lika a perfect normal distribution, which I think it would have to be for this result to be true.
+
+```{r echo=FALSE}
+oldSteps <- sum(stepsPerDay)
+newSteps <- sum(stepSums)
+
+```
+
+The impact has been to increase the total amount of steps from `r oldSteps` to `r newSteps` .
+
+####Weekday assignment
+
+First we assign the day of the week to a separate vector and add it to our dataset:
+```{r}
+weekday <- weekdays(as.Date(tidyValues$date))
+tidyValues <- cbind(tidyValues, weekday)
+```
+
+Now we assign all saturdays and sundays to weekend and the rest as weekdays by first creating an with the same contents as weekday:
+```{r}
+dayCategory <- weekday
+```
+
+I then write a function that takes x and checks if it is "Saturday" or "Sunday", if this is the case then it changes the value to "weekend", if not it changes the value to "weekday"
+```{r}
+wordSwapper <- function(x){
+        if(x == "Saturday"|"Sunday" == TRUE){
+                x <- "weekend"
+        }
+        else{
+                x <- "weekday"
+        }
+}
+```
+I then use sapply to iterate over the dayCategory and columnbind this to the dataset. This is done to maintain the granularity of the data, so that we can always go back and check for each day should we want to.
+```{r}
+dayCategory <- sapply(dayCategory, wordSwapper)
+tidyValues <- cbind(tidyValues, dayCategory)
+
+```
+
+###Plot
+
+First we load the dplyr package.
+```{r}
+library(dplyr)
+```
+
+```{r}
+tidyWeekend <- tbl_df(tidyValues)
+tidyWeekend <- filter(tidyValues, dayCategory == "weekend")
+plot(unique(tidyWeekend$interval), tapply(tidyWeekend$steps, tidyWeekend$interval, mean, na.rm=TRUE), type="l",  main = "Activity for weekend",xlab = "5 minute intervals", ylab ="Average steps")
+```
 
 
+```{r echo = FALSE}
+tidyWeekday <- filter(tidyValues, dayCategory == "weekday")
+plot(unique(tidyWeekday$interval), tapply(tidyWeekday$steps, tidyWeekday$interval, mean, na.rm=TRUE), type="l", main = "Activity for weekday",xlab = "5 minute intervals", ylab ="Average steps")
+```
 
+The plots seem to indicate that people are more active during the weekends, with more steps.
